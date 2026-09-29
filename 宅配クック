@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海凪 業務アプリポータル</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card-container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .app-card {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.1s, border-color 0.1s;
+    }
+    .app-card:active {
+      transform: scale(0.98);
+      border-color: #0284c7;
+    }
+    .icon {
+      font-size: 2.2rem;
+    }
+    .title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #0284c7;
+    }
+    .desc {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card-container">
+    <h1>🌊 海凪 アプリメニュー</h1>
+
+    <!-- 体重測定アプリへのリンク -->
+    <a href="https://script.google.com/macros/s/AKfycbxc26TMaxueVx0NGseM3NZmBeLWDcDaoUDxslEs5oAOHsVnpNHUb783MMjMxR-e71O5Xw/exec" class="app-card">
+      <div class="icon">⚖️</div>
+      <div>
+        <div class="title">体重測定入力</div>
+        <div class="desc">テンキー・音声入力で簡単記録</div>
+      </div>
+    </a>
+
+    <!-- 配食管理アプリへのリンク -->
+    <a href="https://script.google.com/macros/s/AKfycbyiNFa-paEXZv38Jvn5aoXSJVLl5EhFTY8Pdu4r3Ji_Bj7QwXJHjncsO6BKzrGd-Wq4/exec" class="app-card">
+      <div class="icon">🍱</div>
+      <div>
+        <div class="title">宅配クック 配食管理</div>
+        <div class="desc">曜日別の注文集計・PDF出力</div>
+      </div>
+    </a>
+  </div>
+
+</body>
+</html>
