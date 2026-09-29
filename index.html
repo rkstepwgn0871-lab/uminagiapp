@@ -2,89 +2,364 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>海凪 業務アプリポータル</title>
+  <title>体重測定入力 (海凪)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- PWA / iPad全画面アプリ設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="体重測定">
+  <meta name="theme-color" content="#0284c7">
+  
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
+    :root {
+      --primary: #0284c7;
+      --primary-light: #e0f2fe;
+      --success: #16a34a;
+      --success-light: #f0fdf4;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --sub-text: #64748b;
+      --bg: #f8fafc;
     }
-    .card-container {
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    h1 {
-      font-size: 1.4rem;
-      text-align: center;
-      margin-bottom: 8px;
-    }
-    .app-card {
-      background: white;
-      border: 2px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 20px;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      transition: transform 0.1s, border-color 0.1s;
-    }
-    .app-card:active {
-      transform: scale(0.98);
-      border-color: #0284c7;
-    }
-    .icon {
-      font-size: 2.2rem;
-    }
-    .title {
-      font-size: 1.15rem;
-      font-weight: bold;
-      color: #0284c7;
-    }
-    .desc {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-top: 4px;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+    
+    header { position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1.5px solid var(--border); padding: 10px 16px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .title { font-size: 1.15rem; font-weight: bold; }
+    
+    .month-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    .month-btn { flex: 0 0 54px; text-align: center; padding: 7px 0; border: 1px solid var(--border); background: #f1f5f9; border-radius: 8px; font-weight: bold; font-size: 0.95rem; color: var(--sub-text); cursor: pointer; }
+    .month-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .container { max-width: 650px; margin: 0 auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    
+    .user-card { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+    .user-card.has-value { border-color: #93c5fd; background: #f8fbff; }
+    
+    .user-info { display: flex; flex-direction: column; gap: 3px; }
+    .user-name { font-size: 1.2rem; font-weight: bold; }
+    .prev-weight { font-size: 0.82rem; color: var(--sub-text); }
+    
+    .input-actions { display: flex; align-items: center; gap: 8px; }
+    .weight-display-btn { width: 105px; height: 46px; border: 2px solid var(--primary); background: #fff; border-radius: 10px; font-size: 1.25rem; font-weight: bold; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .weight-display-btn.empty { border-color: #cbd5e1; color: #94a3b8; font-size: 0.95rem; font-weight: normal; }
+    
+    .mic-btn { width: 46px; height: 46px; border-radius: 50%; border: none; background: #f1f5f9; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+    .mic-btn.listening { background: #ef4444; color: #fff; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
+    .modal-sheet { background: #fff; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 16px 18px 24px; box-shadow: 0 -4px 16px rgba(0,0,0,0.15); animation: slideUp 0.2s ease-out; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .modal-user-name { font-size: 1.25rem; font-weight: bold; }
+    
+    .pad-screen { width: 100%; height: 58px; background: #f8fafc; border: 2px solid var(--primary); border-radius: 10px; font-size: 1.8rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    
+    .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 8px; margin-bottom: 10px; }
+    .key-btn { height: 54px; border: 1px solid var(--border); border-radius: 10px; background: #fff; font-size: 1.4rem; font-weight: bold; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .key-btn:active { background: #e2e8f0; }
+    .key-btn.action-next { grid-row: span 2; height: 100%; background: var(--primary); color: #fff; font-size: 1.05rem; }
+    .key-btn.action-next:active { background: #0369a1; }
+    .key-btn.action-back { background: #fee2e2; color: #dc2626; font-size: 1.2rem; }
+    .key-btn.quick-status { font-size: 0.95rem; background: #f1f5f9; color: #475569; }
+
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .hidden { display: none !important; }
+    .loading-box { text-align: center; padding: 40px; color: var(--sub-text); font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <div class="card-container">
-    <h1>🌊 海凪 アプリメニュー</h1>
+  <header>
+    <div class="header-top">
+      <div class="title">⚖️ 体重測定入力 (海凪)</div>
+      <span id="syncIndicator" style="font-size: 0.8rem; color: #16a34a; font-weight: bold;"></span>
+    </div>
+    <div class="month-bar" id="monthBar"></div>
+  </header>
 
-    <!-- 体重測定アプリへのリンク -->
-    <a href="https://script.google.com/macros/s/AKfycbxc26TMaxueVx0NGseM3NZmBeLWDcDaoUDxslEs5oAOHsVnpNHUb783MMjMxR-e71O5Xw/exec" class="app-card">
-      <div class="icon">⚖️</div>
-      <div>
-        <div class="title">体重測定入力</div>
-        <div class="desc">テンキー・音声入力で簡単記録</div>
-      </div>
-    </a>
-
-    <!-- 配食管理アプリへのリンク -->
-    <a href="https://script.google.com/macros/s/AKfycbyiNFa-paEXZv38Jvn5aoXSJVLl5EhFTY8Pdu4r3Ji_Bj7QwXJHjncsO6BKzrGd-Wq4/exec" class="app-card">
-      <div class="icon">🍱</div>
-      <div>
-        <div class="title">宅配クック 配食管理</div>
-        <div class="desc">曜日別の注文集計・PDF出力</div>
-      </div>
-    </a>
+  <div class="container" id="userContainer">
+    <div class="loading-box" id="loadingBox">データを読み込み中...</div>
   </div>
 
+  <!-- テンキーモーダル -->
+  <div id="inputModal" class="modal-overlay hidden" onclick="closeModal()">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-user-name" id="modalUserName">名前</div>
+          <div style="font-size: 0.8rem; color: var(--sub-text);" id="modalPrevWeight">前月: --kg</div>
+        </div>
+        <button style="border:none; background:none; font-size:1.4rem; cursor:pointer;" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="pad-screen" id="padScreen">--</div>
+
+      <div class="keypad-grid">
+        <button class="key-btn" onclick="pressKey('7')">7</button>
+        <button class="key-btn" onclick="pressKey('8')">8</button>
+        <button class="key-btn" onclick="pressKey('9')">9</button>
+        <button class="key-btn action-back" onclick="pressKey('BS')">⌫</button>
+
+        <button class="key-btn" onclick="pressKey('4')">4</button>
+        <button class="key-btn" onclick="pressKey('5')">5</button>
+        <button class="key-btn" onclick="pressKey('6')">6</button>
+        <button class="key-btn quick-status" onclick="setQuickStatus('入院')">入院</button>
+
+        <button class="key-btn" onclick="pressKey('1')">1</button>
+        <button class="key-btn" onclick="pressKey('2')">2</button>
+        <button class="key-btn" onclick="pressKey('3')">3</button>
+        <button class="key-btn action-next" onclick="submitAndNext()">確定<br>次へ ➔</button>
+
+        <button class="key-btn" onclick="pressKey('0')">0</button>
+        <button class="key-btn" onclick="pressKey('.')">.</button>
+        <button class="key-btn quick-status" onclick="setQuickStatus('ー')">ー</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">保存しました</div>
+
+  <script>
+    // 🔗 あなたのGAS WebアプリURL
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxc26TMaxueVx0NGseM3NZmBeLWDcDaoUDxslEs5oAOHsVnpNHUb783MMjMxR-e71O5Xw/exec";
+
+    let currentMonth = "9月";
+    let appData = [];
+    const monthCache = {};
+    let activeUserIndex = null;
+    let currentPadValue = "";
+
+    window.onload = function() {
+      // 現在の月を自動判定
+      const nowMonth = (new Date().getMonth() + 1) + "月";
+      currentMonth = nowMonth;
+      renderMonthBar();
+      fetchMonthData(currentMonth);
+    };
+
+    function renderMonthBar() {
+      const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+      const bar = document.getElementById('monthBar');
+      bar.innerHTML = months.map(m => `
+        <button class="month-btn ${m === currentMonth ? 'active' : ''}" onclick="switchMonth('${m}')">${m}</button>
+      `).join('');
+    }
+
+    function switchMonth(m) {
+      if (currentMonth === m) return;
+      currentMonth = m;
+      renderMonthBar();
+
+      if (monthCache[m]) {
+        appData = monthCache[m];
+        renderUserList();
+      } else {
+        fetchMonthData(m);
+      }
+    }
+
+    async function fetchMonthData(m) {
+      const container = document.getElementById('userContainer');
+      container.innerHTML = `<div class="loading-box">${m} のデータを取得中...</div>`;
+
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=getWeightData&month=${encodeURIComponent(m)}`);
+        const data = await res.json();
+        appData = data.users || [];
+        monthCache[m] = appData;
+        renderUserList();
+      } catch (err) {
+        container.innerHTML = `<div class="loading-box" style="color:red;">データの読み込みに失敗しました。<br><button onclick="fetchMonthData('${m}')" style="margin-top:10px; padding:6px 12px;">再試行</button></div>`;
+      }
+    }
+
+    function renderUserList() {
+      const container = document.getElementById('userContainer');
+      container.innerHTML = '';
+
+      if (appData.length === 0) {
+        container.innerHTML = '<div class="loading-box">利用者が登録されていません</div>';
+        return;
+      }
+
+      appData.forEach((u, idx) => {
+        const hasVal = Boolean(u.currentWeight);
+        const card = document.createElement('div');
+        card.className = `user-card ${hasVal ? 'has-value' : ''}`;
+        card.id = `user-row-${idx}`;
+
+        card.innerHTML = `
+          <div class="user-info">
+            <span class="user-name">${escapeHtml(u.name)}</span>
+            <span class="prev-weight">前月: ${u.prevWeight ? u.prevWeight + 'kg' : '--'}</span>
+          </div>
+          <div class="input-actions">
+            <button class="mic-btn" id="mic-btn-${idx}" onclick="startVoiceInput(${idx})" title="音声入力">🎤</button>
+            <div class="weight-display-btn ${hasVal ? '' : 'empty'}" onclick="openModal(${idx})">
+              ${hasVal ? u.currentWeight + (isNaN(u.currentWeight) ? '' : 'kg') : '入力'}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* 🎤 音声認識処理 (Web Speech API) */
+    function startVoiceInput(index) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('お使いのブラウザは音声入力に対応していません。(iPadのSafariで開いてください)');
+        return;
+      }
+
+      const micBtn = document.getElementById(`mic-btn-${index}`);
+      micBtn.classList.add('listening');
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.interimResults = false;
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        micBtn.classList.remove('listening');
+        
+        const parsed = parseVoiceText(transcript);
+        if (parsed !== null) {
+          saveAndApply(index, parsed);
+          showToast(`「${transcript}」➔ ${parsed} で保存`);
+        } else {
+          alert(`「${transcript}」を認識できませんでした。数字（例: 42.1）をお話しください。`);
+        }
+      };
+
+      recognition.onerror = function() { micBtn.classList.remove('listening'); };
+      recognition.onend = function() { micBtn.classList.remove('listening'); };
+      recognition.start();
+    }
+
+    function parseVoiceText(text) {
+      if (!text) return null;
+      let str = text.trim();
+      if (str.includes("入院")) return "入院";
+      if (str.includes("なし") || str.includes("ハイフン") || str.includes("休み")) return "ー";
+      
+      str = str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+      str = str.replace(/(点|コンマ|ドット|・|、)/g, '.');
+      str = str.replace(/(キロ|kg|グラム)/gi, '');
+      str = str.replace(/\s+/g, '');
+
+      const match = str.match(/\d+(\.\d+)?/);
+      return match ? match[0] : null;
+    }
+
+    /* 🔢 テンキーモーダル操作 */
+    function openModal(index) {
+      activeUserIndex = index;
+      const user = appData[index];
+      document.getElementById('modalUserName').textContent = user.name;
+      document.getElementById('modalPrevWeight').textContent = `前月: ${user.prevWeight ? user.prevWeight + 'kg' : '--'}`;
+      
+      currentPadValue = user.currentWeight || "";
+      updatePadScreen();
+      document.getElementById('inputModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('inputModal').classList.add('hidden');
+      activeUserIndex = null;
+    }
+
+    function updatePadScreen() {
+      const el = document.getElementById('padScreen');
+      el.textContent = currentPadValue ? (currentPadValue + (isNaN(currentPadValue) ? '' : ' kg')) : '--';
+    }
+
+    function pressKey(key) {
+      if (key === 'BS') {
+        currentPadValue = currentPadValue.slice(0, -1);
+      } else if (key === '.') {
+        if (!currentPadValue.includes('.')) {
+          currentPadValue += currentPadValue === "" ? "0." : ".";
+        }
+      } else {
+        if (isNaN(currentPadValue)) currentPadValue = "";
+        currentPadValue += key;
+      }
+      updatePadScreen();
+    }
+
+    function setQuickStatus(status) {
+      currentPadValue = status;
+      updatePadScreen();
+    }
+
+    function submitAndNext() {
+      if (activeUserIndex === null) return;
+      const thisIdx = activeUserIndex;
+      saveAndApply(thisIdx, currentPadValue);
+
+      if (thisIdx + 1 < appData.length) {
+        openModal(thisIdx + 1);
+      } else {
+        closeModal();
+        showToast('全員の入力が完了しました！');
+      }
+    }
+
+    /* 💾 画面即時反映 ＋ 裏でGASに非同期保存（爆速） */
+    function saveAndApply(index, value) {
+      const user = appData[index];
+      user.currentWeight = value;
+
+      const row = document.getElementById(`user-row-${index}`);
+      const btn = row.querySelector('.weight-display-btn');
+      btn.textContent = value ? value + (isNaN(value) ? '' : 'kg') : '入力';
+      if (value) {
+        btn.classList.remove('empty');
+        row.classList.add('has-value');
+      } else {
+        btn.classList.add('empty');
+        row.classList.remove('has-value');
+      }
+
+      showToast(`✓ ${user.name} を保存中...`);
+
+      // 裏側でGASにPOST送信（CORSエラーを回避するtext/plain形式）
+      fetch(GAS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "saveWeight",
+          month: currentMonth,
+          rowIndex: user.rowIndex,
+          value: value
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        showToast(`✓ ${user.name} を保存しました`);
+      })
+      .catch(err => {
+        console.error(err);
+        showToast(`⚠️ 保存に失敗しました`);
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
 </body>
 </html>
